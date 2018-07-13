@@ -1,13 +1,15 @@
-require('../../stylus/components/_bottom-sheets.styl')
+import '../../stylus/components/_bottom-sheets.styl'
 
 import VDialog from '../VDialog/VDialog'
 
+/* @vue/component */
 export default {
   name: 'v-bottom-sheet',
 
   props: {
     disabled: Boolean,
     fullWidth: Boolean,
+    hideOverlay: Boolean,
     inset: Boolean,
     lazy: Boolean,
     maxWidth: {
@@ -24,8 +26,8 @@ export default {
     }, this.$slots.activator)
 
     const contentClass = [
-      'bottom-sheet',
-      this.inset ? 'bottom-sheet--inset' : ''
+      'v-bottom-sheet',
+      this.inset ? 'v-bottom-sheet--inset' : ''
     ].join(' ')
 
     return h(VDialog, {
@@ -36,7 +38,8 @@ export default {
         ...this.$listeners
       },
       props: {
-        contentClass: contentClass,
+        contentClass,
+        noClickAnimation: true,
         transition: 'bottom-sheet-transition',
         value: this.value
       }

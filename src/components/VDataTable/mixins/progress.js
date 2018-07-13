@@ -1,15 +1,16 @@
+/* @vue/component */
 export default {
   methods: {
     genTProgress () {
       const col = this.$createElement('th', {
         staticClass: 'column',
         attrs: {
-          colspan: '100%'
+          colspan: this.headerColumns
         }
       }, [this.genProgress()])
 
       return this.genTR([col], {
-        staticClass: 'datatable__progress'
+        staticClass: 'v-datatable__progress'
       })
     }
   }

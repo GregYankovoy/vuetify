@@ -1,12 +1,18 @@
 @import '../bootstrap'
+@import '../browsers'
 
-.content
-  flex: 1 1 auto
+.v-content
+  bootable()
+
+  display: flex
+  flex: 1 0 auto
   max-width: 100%
-  transition: .2s padding $transition.fast-out-slow-in
-  will-change: padding
 
-  &--wrap
-    flex: 1 0 auto
-    display: flex
+  &__wrap
+    flex: 1 1 auto
     max-width: 100%
+    position: relative
+
+  +firefox()
+    @media print
+      display: block

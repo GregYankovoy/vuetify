@@ -1,4 +1,5 @@
 export default function Grid (name) {
+  /* @vue/component */
   return {
     name: `v-${name}`,
 
@@ -16,13 +17,13 @@ export default function Grid (name) {
       data.staticClass = (`${name} ${data.staticClass || ''}`).trim()
 
       if (data.attrs) {
-        const classes = []
+        const classes = Object.keys(data.attrs).filter(key => {
+          // TODO: Remove once resolved
+          // https://github.com/vuejs/vue/issues/7841
+          if (key === 'slot') return false
 
-        Object.keys(data.attrs).forEach(key => {
           const value = data.attrs[key]
-
-          if (typeof value === 'string') classes.push(key)
-          else if (value) classes.push(key)
+          return value || typeof value === 'string'
         })
 
         if (classes.length) data.staticClass += ` ${classes.join(' ')}`

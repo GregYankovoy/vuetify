@@ -1,6 +1,6 @@
 @import '../bootstrap'
 
-.progress-linear
+.v-progress-linear
   background: transparent
   margin: 1rem 0
   overflow: hidden
@@ -11,12 +11,12 @@
     width: 100%
     height: inherit
     position: relative
-    transition: .3s ease-in
+    transition: .2s $transition.fast-in-slow-out
     z-index: 1
 
     &__determinate
       height: inherit
-      transition: .3s ease-in
+      transition: .2s $transition.fast-in-slow-out
 
     &__indeterminate
       .long, .short
@@ -47,7 +47,7 @@
     transition: .3s ease-in
 
   &--query
-    .progress-linear__bar__indeterminate
+    .v-progress-linear__bar__indeterminate
       &--active .long
         animation: query
         animation-duration: 2s
@@ -101,4 +101,3 @@
     100%
       right: 107%
       left: -8%
-

@@ -1,17 +1,22 @@
-require('../../stylus/components/_navigation-drawer.styl')
+import '../../stylus/components/_navigation-drawer.styl'
 
+// Mixins
 import Applicationable from '../../mixins/applicationable'
 import Overlayable from '../../mixins/overlayable'
+import SSRBootable from '../../mixins/ssr-bootable'
 import Themeable from '../../mixins/themeable'
 
+// Directives
 import ClickOutside from '../../directives/click-outside'
 import Resize from '../../directives/resize'
 import Touch from '../../directives/touch'
 
+// Helpers
+import { convertToUnit } from '../../util/helpers'
+
+/* @vue/component */
 export default {
   name: 'v-navigation-drawer',
-
-  mixins: [Applicationable, Overlayable, Themeable],
 
   directives: {
     ClickOutside,
@@ -19,23 +24,25 @@ export default {
     Touch
   },
 
-  data () {
-    return {
-      isActive: false,
-      touchArea: {
-        left: 0,
-        right: 0
-      }
-    }
-  },
+  mixins: [
+    Applicationable(null, [
+      'miniVariant',
+      'right',
+      'width'
+    ]),
+    Overlayable,
+    SSRBootable,
+    Themeable
+  ],
 
   props: {
-    absolute: Boolean,
     clipped: Boolean,
     disableRouteWatcher: Boolean,
     disableResizeWatcher: Boolean,
-    height: String,
-    fixed: Boolean,
+    height: {
+      type: [Number, String],
+      default: '100%'
+    },
     floating: Boolean,
     miniVariant: Boolean,
     miniVariantWidth: {
@@ -58,9 +65,32 @@ export default {
     value: { required: false }
   },
 
+  data: () => ({
+    isActive: false,
+    touchArea: {
+      left: 0,
+      right: 0
+    }
+  }),
+
   computed: {
-    calculatedHeight () {
-      return this.height || '100%'
+    /**
+     * Used for setting an app
+     * value from a dynamic
+     * property. Called from
+     * applicationable.js
+     *
+     * @return {string}
+     */
+    applicationProperty () {
+      return this.right ? 'right' : 'left'
+    },
+    calculatedTransform () {
+      if (this.isActive) return 0
+
+      return this.right
+        ? this.calculatedWidth
+        : -this.calculatedWidth
     },
     calculatedWidth () {
       return this.miniVariant
@@ -69,23 +99,24 @@ export default {
     },
     classes () {
       return {
-        'navigation-drawer': true,
-        'navigation-drawer--absolute': this.absolute,
-        'navigation-drawer--clipped': this.clipped,
-        'navigation-drawer--close': !this.isActive,
-        'navigation-drawer--fixed': this.fixed,
-        'navigation-drawer--floating': this.floating,
-        'navigation-drawer--is-mobile': this.isMobile,
-        'navigation-drawer--mini-variant': this.miniVariant,
-        'navigation-drawer--open': this.isActive,
-        'navigation-drawer--right': this.right,
-        'navigation-drawer--temporary': this.temporary,
+        'v-navigation-drawer': true,
+        'v-navigation-drawer--absolute': this.absolute,
+        'v-navigation-drawer--clipped': this.clipped,
+        'v-navigation-drawer--close': !this.isActive,
+        'v-navigation-drawer--fixed': !this.absolute && (this.app || this.fixed),
+        'v-navigation-drawer--floating': this.floating,
+        'v-navigation-drawer--is-mobile': this.isMobile,
+        'v-navigation-drawer--mini-variant': this.miniVariant,
+        'v-navigation-drawer--open': this.isActive,
+        'v-navigation-drawer--right': this.right,
+        'v-navigation-drawer--temporary': this.temporary,
         'theme--dark': this.dark,
         'theme--light': this.light
       }
     },
     isMobile () {
-      return !this.permanent &&
+      return !this.stateless &&
+        !this.permanent &&
         !this.temporary &&
         this.$vuetify.breakpoint.width < parseInt(this.mobileBreakPoint, 10)
     },
@@ -120,40 +151,37 @@ export default {
     reactsToRoute () {
       return !this.disableRouteWatcher &&
         !this.stateless &&
-        !this.permanent
+        (this.temporary || this.isMobile)
     },
     resizeIsDisabled () {
       return this.disableResizeWatcher || this.stateless
     },
     showOverlay () {
       return this.isActive &&
-        (this.temporary || this.isMobile)
+        (this.isMobile || this.temporary)
     },
     styles () {
-      return {
-        height: this.calculatedHeight,
+      const styles = {
+        height: convertToUnit(this.height),
         marginTop: `${this.marginTop}px`,
         maxHeight: `calc(100% - ${this.maxHeight}px)`,
+        transform: `translateX(${this.calculatedTransform}px)`,
         width: `${this.calculatedWidth}px`
       }
+
+      return styles
     }
   },
 
   watch: {
     $route () {
-      if (this.reactsToRoute) {
-        this.isActive = !this.closeConditional()
+      if (this.reactsToRoute && this.closeConditional()) {
+        this.isActive = false
       }
     },
     isActive (val) {
       this.$emit('input', val)
-
-      if (this.temporary || this.isMobile) {
-        this.tryOverlay()
-        this.$el && (this.$el.scrollTop = 0)
-      }
-
-      this.updateApplication()
+      this.callUpdate()
     },
     /**
      * When mobile changes, adjust
@@ -173,10 +201,7 @@ export default {
       ) return
 
       this.isActive = !val
-      this.updateApplication()
-    },
-    miniVariant () {
-      this.updateApplication()
+      this.callUpdate()
     },
     permanent (val) {
       // If enabling prop
@@ -184,45 +209,26 @@ export default {
       if (val) {
         this.isActive = true
       }
-      this.updateApplication()
+      this.callUpdate()
     },
-    right (val, prev) {
-      // When the value changes
-      // reset previous direction
-      if (prev != null) {
-        const dir = val ? 'left' : 'right'
-        this.$vuetify.application[dir] = 0
-      }
-
-      this.updateApplication()
+    showOverlay (val) {
+      if (val) this.genOverlay()
+      else this.removeOverlay()
     },
-    temporary (val) {
-      this.tryOverlay()
-      this.updateApplication()
+    temporary () {
+      this.callUpdate()
     },
     value (val) {
       if (this.permanent) return
+
+      if (val == null) return this.init()
 
       if (val !== this.isActive) this.isActive = val
     }
   },
 
-  created () {
-    if (this.permanent) {
-      this.isActive = true
-    } else if (this.stateless ||
-      this.value != null
-    ) {
-      this.isActive = this.value
-    } else if (!this.temporary) {
-      this.isActive = !this.isMobile
-    }
-  },
-
-  destroyed () {
-    if (this.app) {
-      this.$vuetify.application[this.right ? 'right' : 'left'] = 0
-    }
+  beforeMount () {
+    this.init()
   },
 
   methods: {
@@ -236,12 +242,16 @@ export default {
       }
     },
     closeConditional () {
-      return this.reactsToClick
+      return this.isActive && this.reactsToClick
     },
     genDirectives () {
-      const directives = [
-        { name: 'click-outside', value: this.closeConditional }
-      ]
+      const directives = [{
+        name: 'click-outside',
+        value: () => (this.isActive = false),
+        args: {
+          closeConditional: this.closeConditional
+        }
+      }]
 
       !this.touchless && directives.push({
         name: 'touch',
@@ -254,12 +264,29 @@ export default {
 
       return directives
     },
+    /**
+     * Sets state before mount to avoid
+     * entry transitions in SSR
+     *
+     * @return {void}
+     */
+    init () {
+      if (this.permanent) {
+        this.isActive = true
+      } else if (this.stateless ||
+        this.value != null
+      ) {
+        this.isActive = this.value
+      } else if (!this.temporary) {
+        this.isActive = !this.isMobile
+      }
+    },
     swipeRight (e) {
       if (this.isActive && !this.right) return
       this.calculateTouchArea()
 
       if (Math.abs(e.touchendX - e.touchstartX) < 100) return
-      else if (!this.right &&
+      if (!this.right &&
         e.touchstartX <= this.touchArea.left
       ) this.isActive = true
       else if (this.right && this.isActive) this.isActive = false
@@ -269,35 +296,22 @@ export default {
       this.calculateTouchArea()
 
       if (Math.abs(e.touchendX - e.touchstartX) < 100) return
-      else if (this.right &&
+      if (this.right &&
         e.touchstartX >= this.touchArea.right
       ) this.isActive = true
       else if (!this.right && this.isActive) this.isActive = false
     },
-    tryOverlay () {
-      if (!this.permanent &&
-        this.showOverlay &&
-        this.isActive
-      ) {
-        return this.genOverlay()
-      }
-
-      this.removeOverlay()
-    },
+    /**
+     * Update the application layout
+     *
+     * @return {number}
+     */
     updateApplication () {
-      if (!this.app) return
-
-      const width = !this.isActive ||
+      return !this.isActive ||
         this.temporary ||
         this.isMobile
         ? 0
         : this.calculatedWidth
-
-      if (this.right) {
-        this.$vuetify.application.right = width
-      } else {
-        this.$vuetify.application.left = width
-      }
     }
   },
 
@@ -307,13 +321,26 @@ export default {
       style: this.styles,
       directives: this.genDirectives(),
       on: {
-        click: () => this.$emit('update:miniVariant', false)
+        click: () => {
+          if (!this.miniVariant) return
+
+          this.$emit('update:miniVariant', false)
+        },
+        transitionend: e => {
+          if (e.target !== e.currentTarget) return
+          this.$emit('transitionend', e)
+
+          // IE11 does not support new Event('resize')
+          const resizeEvent = document.createEvent('UIEvents')
+          resizeEvent.initUIEvent('resize', true, false, window, 0)
+          window.dispatchEvent(resizeEvent)
+        }
       }
     }
 
     return h('aside', data, [
       this.$slots.default,
-      h('div', { 'class': 'navigation-drawer__border' })
+      h('div', { 'class': 'v-navigation-drawer__border' })
     ])
   }
 }

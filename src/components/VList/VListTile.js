@@ -1,21 +1,26 @@
+// Mixins
+import Colorable from '../../mixins/colorable'
 import Routable from '../../mixins/routable'
 import Toggleable from '../../mixins/toggleable'
+
+// Directives
 import Ripple from '../../directives/ripple'
 
+/* @vue/component */
 export default {
   name: 'v-list-tile',
-
-  mixins: [Routable, Toggleable],
 
   directives: {
     Ripple
   },
 
-  inheritAttrs: false,
+  mixins: [
+    Colorable,
+    Routable,
+    Toggleable
+  ],
 
-  data: () => ({
-    proxyClass: 'list__tile--active'
-  }),
+  inheritAttrs: false,
 
   props: {
     activeClass: {
@@ -27,14 +32,25 @@ export default {
     tag: String
   },
 
+  data: () => ({
+    proxyClass: 'v-list__tile--active'
+  }),
+
   computed: {
+    listClasses () {
+      return this.disabled
+        ? 'v-list--disabled'
+        : this.color
+          ? this.addTextColorClassChecks()
+          : this.defaultColor
+    },
     classes () {
       return {
-        'list__tile': true,
-        'list__tile--link': this.isLink && !this.inactive,
-        'list__tile--avatar': this.avatar,
-        'list__tile--disabled': this.disabled,
-        'list__tile--active': !this.to && this.isActive,
+        'v-list__tile': true,
+        'v-list__tile--link': this.isLink && !this.inactive,
+        'v-list__tile--avatar': this.avatar,
+        'v-list__tile--disabled': this.disabled,
+        'v-list__tile--active': !this.to && this.isActive,
         [this.activeClass]: this.isActive
       }
     },
@@ -55,7 +71,8 @@ export default {
 
     data.attrs = Object.assign({}, data.attrs, this.$attrs)
 
-    return h('li', {
+    return h('div', {
+      'class': this.listClasses,
       attrs: {
         disabled: this.disabled
       },

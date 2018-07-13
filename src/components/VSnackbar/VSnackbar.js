@@ -1,36 +1,18 @@
-require('../../stylus/components/_snackbars.styl')
-
-import {
-  VSlideYTransition,
-  VSlideYReverseTransition
-} from '../transitions'
+import '../../stylus/components/_snackbars.styl'
 
 import Colorable from '../../mixins/colorable'
 import Toggleable from '../../mixins/toggleable'
+import { factory as PositionableFactory } from '../../mixins/positionable'
 
+/* @vue/component */
 export default {
   name: 'v-snackbar',
 
-  components: {
-    VSlideYTransition,
-    VSlideYReverseTransition
-  },
-
-  mixins: [Colorable, Toggleable],
-
-  data () {
-    return {
-      activeTimeout: {}
-    }
-  },
+  mixins: [Colorable, Toggleable, PositionableFactory(['absolute', 'top', 'bottom', 'left', 'right'])],
 
   props: {
-    absolute: Boolean,
-    bottom: Boolean,
-    left: Boolean,
+    autoHeight: Boolean,
     multiLine: Boolean,
-    right: Boolean,
-    top: Boolean,
     // TODO: change this to closeDelay to match other API in delayable.js
     timeout: {
       type: Number,
@@ -39,21 +21,25 @@ export default {
     vertical: Boolean
   },
 
+  data () {
+    return {
+      activeTimeout: {}
+    }
+  },
+
   computed: {
     classes () {
-      return this.addBackgroundColorClassChecks({
-        'snack--active': this.isActive,
-        'snack--absolute': this.absolute,
-        'snack--bottom': this.bottom || !this.top,
-        'snack--left': this.left,
-        'snack--multi-line': this.multiLine && !this.vertical,
-        'snack--right': this.right,
-        'snack--top': this.top,
-        'snack--vertical': this.vertical
-      })
-    },
-    computedTransition () {
-      return this.top ? 'v-slide-y-transition' : 'v-slide-y-reverse-transition'
+      return {
+        'v-snack--active': this.isActive,
+        'v-snack--absolute': this.absolute,
+        'v-snack--auto-height': this.autoHeight,
+        'v-snack--bottom': this.bottom || !this.top,
+        'v-snack--left': this.left,
+        'v-snack--multi-line': this.multiLine && !this.vertical,
+        'v-snack--right': this.right,
+        'v-snack--top': this.top,
+        'v-snack--vertical': this.vertical
+      }
     }
   },
 
@@ -61,6 +47,10 @@ export default {
     isActive () {
       this.setTimeout()
     }
+  },
+
+  mounted () {
+    this.setTimeout()
   },
 
   methods: {
@@ -75,23 +65,30 @@ export default {
     }
   },
 
-  mounted () {
-    this.setTimeout()
-  },
-
   render (h) {
     const children = []
 
     if (this.isActive) {
-      children.push(h('div', {
-        staticClass: 'snack__content'
-      }, this.$slots.default))
+      children.push(
+        h('div', {
+          staticClass: 'v-snack',
+          class: this.classes,
+          on: this.$listeners
+        }, [
+          h('div', {
+            staticClass: 'v-snack__wrapper',
+            class: this.addBackgroundColorClassChecks()
+          }, [
+            h('div', {
+              staticClass: 'v-snack__content'
+            }, this.$slots.default)
+          ])
+        ])
+      )
     }
 
-    return h('div', {
-      staticClass: 'snack',
-      'class': this.classes,
-      on: this.$listeners
-    }, [h(this.computedTransition, children)])
+    return h('transition', {
+      attrs: { name: 'v-snack-transition' }
+    }, children)
   }
 }

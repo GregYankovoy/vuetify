@@ -1,7 +1,8 @@
-require('../../stylus/components/_steppers.styl')
+import '../../stylus/components/_steppers.styl'
 
 import Themeable from '../../mixins/themeable'
 
+/* @vue/component */
 export default {
   name: 'v-stepper',
 
@@ -11,6 +12,13 @@ export default {
     return {
       stepClick: this.stepClick
     }
+  },
+
+  props: {
+    nonLinear: Boolean,
+    altLabels: Boolean,
+    vertical: Boolean,
+    value: [Number, String]
   },
 
   data () {
@@ -23,21 +31,14 @@ export default {
     }
   },
 
-  props: {
-    nonLinear: Boolean,
-    altLabels: Boolean,
-    vertical: Boolean,
-    value: [Number, String]
-  },
-
   computed: {
     classes () {
       return {
-        'stepper': true,
-        'stepper--is-booted': this.isBooted,
-        'stepper--vertical': this.vertical,
-        'stepper--alt-labels': this.altLabels,
-        'stepper--non-linear': this.nonLinear,
+        'v-stepper': true,
+        'v-stepper--is-booted': this.isBooted,
+        'v-stepper--vertical': this.vertical,
+        'v-stepper--alt-labels': this.altLabels,
+        'v-stepper--non-linear': this.nonLinear,
         'theme--dark': this.dark,
         'theme--light': this.light
       }
@@ -47,8 +48,12 @@ export default {
   watch: {
     inputValue (val, prev) {
       this.isReverse = Number(val) < Number(prev)
-      this.steps.forEach(i => i.toggle(this.inputValue))
-      this.content.forEach(i => i.toggle(this.inputValue, this.isReverse))
+      for (let index = this.steps.length; --index >= 0;) {
+        this.steps[index].toggle(this.inputValue)
+      }
+      for (let index = this.content.length; --index >= 0;) {
+        this.content[index].toggle(this.inputValue, this.isReverse)
+      }
 
       this.$emit('input', this.inputValue)
       prev && (this.isBooted = true)
@@ -69,14 +74,15 @@ export default {
     getSteps () {
       this.steps = []
       this.content = []
-      this.$children.forEach(i => {
-        if (i.$options._componentTag === 'v-stepper-step') {
-          this.steps.push(i)
-        } else if (i.$options._componentTag === 'v-stepper-content') {
-          i.isVertical = this.vertical
-          this.content.push(i)
+      for (let index = 0; index < this.$children.length; index++) {
+        const child = this.$children[index]
+        if (child.$options.name === 'v-stepper-step') {
+          this.steps.push(child)
+        } else if (child.$options.name === 'v-stepper-content') {
+          child.isVertical = this.vertical
+          this.content.push(child)
         }
-      })
+      }
     },
     stepClick (step) {
       this.getSteps()

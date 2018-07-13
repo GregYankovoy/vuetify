@@ -1,4 +1,4 @@
-require('../../stylus/components/_pagination.styl')
+import '../../stylus/components/_pagination.styl'
 
 import VIcon from '../VIcon'
 
@@ -6,19 +6,13 @@ import Resize from '../../directives/resize'
 
 import Colorable from '../../mixins/colorable'
 
+/* @vue/component */
 export default {
   name: 'v-pagination',
 
-  mixins: [Colorable],
-
   directives: { Resize },
 
-  data () {
-    return {
-      maxButtons: 0,
-      defaultColor: 'primary'
-    }
-  },
+  mixins: [Colorable],
 
   props: {
     circle: Boolean,
@@ -31,11 +25,11 @@ export default {
     totalVisible: [Number, String],
     nextIcon: {
       type: String,
-      default: 'chevron_right'
+      default: '$vuetify.icons.next'
     },
     prevIcon: {
       type: String,
-      default: 'chevron_left'
+      default: '$vuetify.icons.prev'
     },
     value: {
       type: Number,
@@ -43,12 +37,19 @@ export default {
     }
   },
 
+  data () {
+    return {
+      maxButtons: 0,
+      defaultColor: 'primary'
+    }
+  },
+
   computed: {
     classes () {
       return {
-        'pagination': true,
-        'pagination--circle': this.circle,
-        'pagination--disabled': this.disabled
+        'v-pagination': true,
+        'v-pagination--circle': this.circle,
+        'v-pagination--disabled': this.disabled
       }
     },
 
@@ -91,6 +92,7 @@ export default {
     init () {
       this.selected = null
 
+      this.$nextTick(this.onResize)
       // TODO: Change this (f75dee3a, cbdf7caa)
       setTimeout(() => (this.selected = this.value), 100)
     },
@@ -125,9 +127,9 @@ export default {
     genIcon (h, icon, disabled, fn) {
       return h('li', [
         h('button', {
-          staticClass: 'pagination__navigation',
+          staticClass: 'v-pagination__navigation',
           class: {
-            'pagination__navigation--disabled': disabled
+            'v-pagination__navigation--disabled': disabled
           },
           on: disabled ? {} : { click: fn }
         }, [h(VIcon, [icon])])
@@ -135,9 +137,9 @@ export default {
     },
     genItem (h, i) {
       return h('button', {
-        staticClass: 'pagination__item',
+        staticClass: 'v-pagination__item',
         class: (i === this.value) ? this.addBackgroundColorClassChecks({
-          'pagination__item--active': true
+          'v-pagination__item--active': true
         }) : {},
         on: {
           click: () => this.$emit('input', i)
@@ -145,9 +147,9 @@ export default {
       }, [i])
     },
     genItems (h) {
-      return this.items.map((i) => {
-        return h('li', [
-          isNaN(i) && h('span', { class: 'pagination__more' }, [i]) || this.genItem(h, i)
+      return this.items.map((i, index) => {
+        return h('li', { key: index }, [
+          isNaN(i) ? h('span', { class: 'v-pagination__more' }, [i]) : this.genItem(h, i)
         ])
       })
     }
@@ -155,13 +157,17 @@ export default {
 
   render (h) {
     const children = [
-      this.genIcon(h, this.prevIcon, this.value <= 1, this.previous),
+      this.genIcon(h, this.$vuetify.rtl ? this.nextIcon : this.prevIcon, this.value <= 1, this.previous),
       this.genItems(h),
-      this.genIcon(h, this.nextIcon, this.value >= this.length, this.next)
+      this.genIcon(h, this.$vuetify.rtl ? this.prevIcon : this.nextIcon, this.value >= this.length, this.next)
     ]
 
     return h('ul', {
-      directives: [{ name: 'resize', value: this.onResize }],
+      directives: [{
+        modifiers: { quiet: true },
+        name: 'resize',
+        value: this.onResize
+      }],
       class: this.classes
     }, children)
   }

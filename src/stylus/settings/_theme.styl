@@ -33,6 +33,12 @@ $material-light := {
     active: rgba(#000, .54),
     inactive: rgba(#000, .38)
   },
+  inputs: {
+    box: rgba(#000, .04),
+    solo-inverted: rgba(#000, .16),
+    solo-inverted-focused: #424242,
+    solo-inverted-focused-text: #fff
+  },
   buttons: {
     disabled: rgba(#000, .26),
     focused: rgba(#000, .12),
@@ -41,6 +47,9 @@ $material-light := {
   },
   expansion-panels: {
     focus: #EEEEEE
+  },
+  list-tile: {
+    hover: rgba(#000, .04)
   },
   selection-controls: {
     thumb: {
@@ -61,6 +70,10 @@ $material-light := {
   tabs: {
     active: rgba(#000, .87)
   },
+  text-fields: {
+    box: rgba(#000, .06),
+    box-hover: rgba(#000, .12)
+  },
   input-bottom-line: rgba(#000, .42),
   stepper: {
     active: rgba(#fff, 1),
@@ -74,6 +87,7 @@ $material-light := {
   picker: {
     body: #fff,
     clock: $grey.lighten-2,
+    indeterminateTime: $grey.lighten-1,
     title: $grey.lighten-2
   },
   bg-color: #fff
@@ -112,6 +126,15 @@ $material-dark := {
     active: #fff,
     inactive: rgba(#fff, .5)
   },
+  inputs: {
+    box: #fff,
+    solo-inverted: rgba(#fff, .16),
+    solo-inverted-focused: #fff,
+    solo-inverted-focused-text: $material-light.text.primary
+  },
+  list-tile: {
+    hover: rgba(#fff, .08)
+  },
   buttons: {
     disabled: rgba(#fff, .3),
     focused: rgba(#fff, .12),
@@ -119,7 +142,7 @@ $material-dark := {
     pressed: rgba(#ccc, .25)
   },
   expansion-panels: {
-    focus: rgba(#000, .70)
+    focus: #494949
   },
   selection-controls: {
     thumb: {
@@ -140,6 +163,11 @@ $material-dark := {
   tabs: {
     active: #fff
   },
+  text-fields: {
+    box: rgba(#000, .1),
+    box-hover: rgba(#000, .2),
+    box-focus: rgba(#000, .3)
+  },
   input-bottom-line: rgba(#fff, .7),
 
   stepper: {
@@ -154,6 +182,7 @@ $material-dark := {
   picker: {
     body: #424242,
     clock: $grey.darken-2,
+    indeterminateTime: $grey.darken-1,
     title: $grey.darken-2
   },
   bg-color: #303030

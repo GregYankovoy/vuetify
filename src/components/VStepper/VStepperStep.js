@@ -1,35 +1,34 @@
+// Components
 import VIcon from '../VIcon'
+
+// Directives
 import Ripple from '../../directives/ripple'
 
+/* @vue/component */
 export default {
   name: 'v-stepper-step',
-
-  components: { VIcon },
 
   directives: { Ripple },
 
   inject: ['stepClick'],
 
-  data () {
-    return {
-      isActive: false,
-      isInactive: true
-    }
-  },
-
   props: {
+    color: {
+      type: String,
+      default: 'primary'
+    },
     complete: Boolean,
     completeIcon: {
       type: String,
-      default: 'check'
+      default: '$vuetify.icons.complete'
     },
     editIcon: {
       type: String,
-      default: 'edit'
+      default: '$vuetify.icons.edit'
     },
     errorIcon: {
       type: String,
-      default: 'warning'
+      default: '$vuetify.icons.error'
     },
     editable: Boolean,
     rules: {
@@ -39,15 +38,22 @@ export default {
     step: [Number, String]
   },
 
+  data () {
+    return {
+      isActive: false,
+      isInactive: true
+    }
+  },
+
   computed: {
     classes () {
       return {
-        'stepper__step': true,
-        'stepper__step--active': this.isActive,
-        'stepper__step--editable': this.editable,
-        'stepper__step--inactive': this.isInactive,
-        'stepper__step--error': this.hasError,
-        'stepper__step--complete': this.complete,
+        'v-stepper__step': true,
+        'v-stepper__step--active': this.isActive,
+        'v-stepper__step--editable': this.editable,
+        'v-stepper__step--inactive': this.isInactive,
+        'v-stepper__step--error': this.hasError,
+        'v-stepper__step--complete': this.complete,
         'error--text': this.hasError
       }
     },
@@ -82,26 +88,26 @@ export default {
     let stepContent
 
     if (this.hasError) {
-      stepContent = [h('v-icon', {}, this.errorIcon)]
+      stepContent = [h(VIcon, {}, this.errorIcon)]
     } else if (this.complete) {
       if (this.editable) {
-        stepContent = [h('v-icon', {}, this.editIcon)]
+        stepContent = [h(VIcon, {}, this.editIcon)]
       } else {
-        stepContent = [h('v-icon', {}, this.completeIcon)]
+        stepContent = [h(VIcon, {}, this.completeIcon)]
       }
     } else {
       stepContent = this.step
     }
 
     const step = h('span', {
-      staticClass: 'stepper__step__step',
+      staticClass: 'v-stepper__step__step',
       'class': {
-        'primary': !this.hasError && (this.complete || this.isActive)
+        [this.color]: !this.hasError && (this.complete || this.isActive)
       }
     }, stepContent)
 
     const label = h('div', {
-      staticClass: 'stepper__label'
+      staticClass: 'v-stepper__label'
     }, this.$slots.default)
 
     return h('div', data, [step, label])

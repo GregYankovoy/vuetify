@@ -1,6 +1,16 @@
-require('../stylus/components/_overlay.styl')
+import '../stylus/components/_overlay.styl'
 
+// Utils
+import { keyCodes } from '../util/helpers'
+
+/* @vue/component */
 export default {
+  name: 'overlayable',
+
+  props: {
+    hideOverlay: Boolean
+  },
+
   data () {
     return {
       overlay: null,
@@ -8,10 +18,6 @@ export default {
       overlayTimeout: null,
       overlayTransitionDuration: 500 + 150 // transition + delay
     }
-  },
-
-  props: {
-    hideOverlay: Boolean
   },
 
   beforeDestroy () {
@@ -30,13 +36,13 @@ export default {
         clearTimeout(this.overlayTimeout)
 
         return this.overlay &&
-          this.overlay.classList.add('overlay--active')
+          this.overlay.classList.add('v-overlay--active')
       }
 
       this.overlay = document.createElement('div')
-      this.overlay.className = 'overlay'
+      this.overlay.className = 'v-overlay'
 
-      if (this.absolute) this.overlay.className += ' overlay--absolute'
+      if (this.absolute) this.overlay.className += ' v-overlay--absolute'
 
       this.hideScroll()
 
@@ -46,9 +52,10 @@ export default {
 
       parent && parent.insertBefore(this.overlay, parent.firstChild)
 
+      // eslint-disable-next-line no-unused-expressions
       this.overlay.clientHeight // Force repaint
       requestAnimationFrame(() => {
-        this.overlay.className += ' overlay--active'
+        this.overlay.className += ' v-overlay--active'
 
         if (this.activeZIndex !== undefined) {
           this.overlay.style.zIndex = this.activeZIndex - 1
@@ -62,15 +69,17 @@ export default {
         return this.showScroll()
       }
 
-      this.overlay.classList.remove('overlay--active')
+      this.overlay.classList.remove('v-overlay--active')
 
       this.overlayTimeout = setTimeout(() => {
         // IE11 Fix
         try {
-          this.overlay.parentNode.removeChild(this.overlay)
+          if (this.overlay && this.overlay.parentNode) {
+            this.overlay.parentNode.removeChild(this.overlay)
+          }
           this.overlay = null
           this.showScroll()
-        } catch (e) {}
+        } catch (e) { console.log(e) }
 
         clearTimeout(this.overlayTimeout)
         this.overlayTimeout = null
@@ -84,8 +93,8 @@ export default {
       if (e.type === 'keydown') {
         if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return
 
-        const up = [38, 33]
-        const down = [40, 34]
+        const up = [keyCodes.up, keyCodes.pageup]
+        const down = [keyCodes.down, keyCodes.pagedown]
 
         if (up.includes(e.keyCode)) {
           e.deltaY = -1
@@ -101,6 +110,8 @@ export default {
         this.checkPath(e)) e.preventDefault()
     },
     hasScrollbar (el) {
+      if (!el || el.nodeType !== Node.ELEMENT_NODE) return false
+
       const style = window.getComputedStyle(el)
       return ['auto', 'scroll'].includes(style['overflow-y']) && el.scrollHeight > el.clientHeight
     },
@@ -134,8 +145,13 @@ export default {
         return true
       }
 
-      for (const el of path) {
-        if ([document, document.documentElement, this.$refs.content].includes(el)) return true
+      for (let index = 0; index < path.length; index++) {
+        const el = path[index]
+
+        if (el === document) return true
+        if (el === document.documentElement) return true
+        if (el === this.$refs.content) return true
+
         if (this.hasScrollbar(el)) return this.shouldScroll(el, delta)
       }
 
